@@ -96,5 +96,7 @@ jobs:
               echo "docker compose is not installed on the server"
               exit 1
             fi
-            $DC -f docker-compose.yml -f docker-compose.prod.yml pull
+            export DOCKER_CLIENT_TIMEOUT=300
+            export COMPOSE_HTTP_TIMEOUT=300
+            $DC -f docker-compose.yml -f docker-compose.prod.yml pull api worker video-parser
             $DC -f docker-compose.yml -f docker-compose.prod.yml up -d
