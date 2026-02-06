@@ -518,8 +518,7 @@ function App() {
                 <Button asChild className="w-full">
                   <a
                     href={`${apiBase}/jobs/${job.job_id}/download${apiToken ? `?token=${encodeURIComponent(apiToken)}` : ""}`}
-                    target="_blank"
-                    rel="noreferrer"
+                    download={`video2mp3-${job.job_id}.mp3`}
                   >
                     <CloudDownload className="h-4 w-4" />
                     下载 MP3
@@ -599,8 +598,7 @@ function App() {
                         <Button asChild size="xs">
                           <a
                             href={`${apiBase}/jobs/${item.job_id}/download${apiToken ? `?token=${encodeURIComponent(apiToken)}` : ""}`}
-                            target="_blank"
-                            rel="noreferrer"
+                            download={`video2mp3-${item.job_id}.mp3`}
                           >
                             下载
                           </a>
