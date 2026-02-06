@@ -147,6 +147,11 @@ Authorization: Bearer <token>
 
 Or `X-API-KEY: <token>`.
 
+## CORS (optional)
+
+Set `CORS_ALLOW_ORIGINS` as a comma-separated list of allowed origins.
+If you don't have a domain yet, you can temporarily set `*` during early testing.
+
 ## Cleanup (optional)
 
 Set `JOB_RETENTION_DAYS` and optionally `CLEANUP_INTERVAL` to enable cleanup.
@@ -166,3 +171,18 @@ Set `RATE_LIMIT_PER_MIN` to a positive integer to enable a per-IP rate limit
 - MinIO bucket is created by `minio-init` on `docker compose up`.
 - You can change ports if they conflict with existing services.
 - `mp3_url` is a short-lived presigned URL (controlled by `MP3_URL_TTL`) because the bucket remains private.
+
+## Deployment (GHCR + server)
+
+This repo includes a GitHub Actions workflow that builds images and pushes them to GHCR,
+then SSH deploys to your server using `docker-compose.prod.yml`.
+
+Server prep (one-time):
+1) Install Docker + Docker Compose
+2) `git clone https://github.com/lyb88999/v2m.git /opt/v2m`
+3) Create `/opt/v2m/docker.env` from `docker.env.example` and fill secrets
+
+GitHub repo secrets needed:
+- `SERVER_HOST` / `SERVER_USER` / `SERVER_SSH_KEY`
+- `GHCR_USER` / `GHCR_TOKEN` (with read:packages for pulling on server)
+- Optional: `PARSER_REPO` to point to your own video-parser fork

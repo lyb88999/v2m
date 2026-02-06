@@ -26,6 +26,7 @@ type Config struct {
 	JobRetentionDays     int
 	CleanupInterval      time.Duration
 	RateLimitPerMinute   int
+	CORSAllowOrigins     string
 	MaxJobDuration       time.Duration
 	MaxFileSizeBytes     int64
 	DownloadConcurrency  int
@@ -54,6 +55,7 @@ func Load() Config {
 		JobRetentionDays:     getEnvInt("JOB_RETENTION_DAYS", 0),
 		CleanupInterval:      getEnvDuration("CLEANUP_INTERVAL", 0),
 		RateLimitPerMinute:   getEnvInt("RATE_LIMIT_PER_MIN", 0),
+		CORSAllowOrigins:     getEnv("CORS_ALLOW_ORIGINS", ""),
 		MaxJobDuration:       getEnvDuration("MAX_JOB_DURATION", 10*time.Minute),
 		MaxFileSizeBytes:     int64(getEnvInt("MAX_FILE_SIZE", 200000000)),
 		DownloadConcurrency:  getEnvInt("DOWNLOAD_CONCURRENCY", 1),

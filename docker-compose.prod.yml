@@ -28,9 +28,7 @@ x-app-env: &app_env
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
+    image: ghcr.io/lyb88999/v2m-api:latest
     container_name: v2m_api
     restart: unless-stopped
     environment:
@@ -43,9 +41,7 @@ services:
       - "8080:8080"
 
   worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.worker
+    image: ghcr.io/lyb88999/v2m-worker:latest
     container_name: v2m_worker
     restart: unless-stopped
     environment:
@@ -57,3 +53,17 @@ services:
       - video-parser
     volumes:
       - ./tmp:/tmp/video2mp3
+
+  video-parser:
+    image: ghcr.io/lyb88999/v2m-parser:latest
+    container_name: v2m_video_parser
+    restart: unless-stopped
+    environment:
+      QWEN_API_BASE_URL: ${QWEN_API_BASE_URL}
+      QWEN_API_KEY: ${QWEN_API_KEY}
+      QWEN_MODEL_ID: ${QWEN_MODEL_ID}
+      MAX_FRAMES: ${MAX_FRAMES}
+      API_SERVER_URL: ${API_SERVER_URL}
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "5001:5001"

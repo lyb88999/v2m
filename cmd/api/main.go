@@ -332,7 +332,7 @@ func main() {
 		writeJSON(w, http.StatusOK, resp)
 	})
 
-	handler := rateLimitMiddleware(cfg.RateLimitPerMinute, time.Minute, authMiddleware(cfg.APIToken, mux))
+	handler := corsMiddleware(cfg.CORSAllowOrigins, rateLimitMiddleware(cfg.RateLimitPerMinute, time.Minute, authMiddleware(cfg.APIToken, mux)))
 
 	if cfg.CleanupInterval > 0 && cfg.JobRetentionDays > 0 {
 		go func() {
@@ -519,6 +519,55 @@ func isAuthorized(r *http.Request, token string) bool {
 		}
 	}
 	return false
+}
+
+func corsMiddleware(allowOrigins string, next http.Handler) http.Handler {
+	if strings.TrimSpace(allowOrigins) == "" {
+		return next
+	}
+
+	allowAll := false
+	allowed := map[string]struct{}{}
+	for _, part := range strings.Split(allowOrigins, ",") {
+		origin := strings.TrimSpace(part)
+		if origin == "" {
+			continue
+		}
+		if origin == "*" {
+			allowAll = true
+			continue
+		}
+		allowed[origin] = struct{}{}
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+		if origin != "" && (allowAll || containsOrigin(allowed, origin)) {
+			if allowAll {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+			} else {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Add("Vary", "Origin")
+			}
+			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization,Content-Type,X-API-KEY")
+			w.Header().Set("Access-Control-Expose-Headers", "Retry-After,X-RateLimit-Limit,X-RateLimit-Remaining")
+		}
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func containsOrigin(allowed map[string]struct{}, origin string) bool {
+	if len(allowed) == 0 {
+		return false
+	}
+	_, ok := allowed[origin]
+	return ok
 }
 
 func streamJobEvents(w http.ResponseWriter, r *http.Request, st *store.Store, s3 *storage.S3Client, cfg config.Config, id string) {
