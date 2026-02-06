@@ -1,0 +1,55 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: v2m_redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    ports:
+      - "6380:6379"
+    volumes:
+      - ./data/redis:/data
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: v2m_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "v2m"
+      POSTGRES_PASSWORD: "v2m_pass"
+      POSTGRES_DB: "v2m"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    container_name: v2m_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD}"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data/minio:/data
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: v2m_minio_init
+    depends_on:
+      - minio
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD}"
+      S3_BUCKET: "${S3_BUCKET}"
+    entrypoint: >
+      /bin/sh -c "
+      for i in 1 2 3 4 5 6 7 8 9 10; do
+        /usr/bin/mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} && break;
+        sleep 2;
+      done;
+      /usr/bin/mc mb -p local/${S3_BUCKET} || true
+      "

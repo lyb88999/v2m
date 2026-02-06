@@ -1,0 +1,10 @@
+services:
+  worker:
+    extends:
+      file: docker-compose.app.yml
+      service: worker
+
+  video-parser:
+    extends:
+      file: docker-compose.parser.yml
+      service: video-parser

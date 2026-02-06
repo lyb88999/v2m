@@ -1,0 +1,18 @@
+services:
+  video-parser:
+    platform: linux/amd64
+    build:
+      context: ../video-parser
+      dockerfile: Dockerfile
+    container_name: v2m_video_parser
+    restart: unless-stopped
+    entrypoint: ["python", "api.py"]
+    environment:
+      QWEN_API_BASE_URL: ${QWEN_API_BASE_URL}
+      QWEN_API_KEY: ${QWEN_API_KEY}
+      QWEN_MODEL_ID: ${QWEN_MODEL_ID}
+      MAX_FRAMES: ${MAX_FRAMES}
+      API_SERVER_URL: ${API_SERVER_URL}
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "5001:5001"

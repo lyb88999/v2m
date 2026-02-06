@@ -1,0 +1,15 @@
+/.env
+/dev.env
+/docker.env
+/local.env
+/data
+/tmp
+/tmp/*
+/downloads
+/.idea
+/.vscode
+.DS_Store
+node_modules
+web/node_modules
+web/dist
+web/.vite

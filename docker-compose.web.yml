@@ -1,0 +1,11 @@
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: v2m_web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "5173:80"

@@ -1,0 +1,58 @@
+x-app-env: &app_env
+  APP_ENV: ${APP_ENV}
+  APP_HTTP_ADDR: ${APP_HTTP_ADDR}
+  TZ: Asia/Shanghai
+  REDIS_ADDR: ${REDIS_ADDR}
+  REDIS_DB: ${REDIS_DB}
+  DATABASE_URL: ${DATABASE_URL}
+  S3_ENDPOINT: ${S3_ENDPOINT}
+  S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT}
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+  S3_SECRET_KEY: ${S3_SECRET_KEY}
+  S3_BUCKET: ${S3_BUCKET}
+  S3_REGION: ${S3_REGION}
+  S3_USE_PATH_STYLE: ${S3_USE_PATH_STYLE}
+  TEMP_DIR: ${TEMP_DIR}
+  MAX_JOB_DURATION: ${MAX_JOB_DURATION}
+  MAX_FILE_SIZE: ${MAX_FILE_SIZE}
+  DOWNLOAD_CONCURRENCY: ${DOWNLOAD_CONCURRENCY}
+  TRANSCODE_CONCURRENCY: ${TRANSCODE_CONCURRENCY}
+  JOB_TIMEOUT: ${JOB_TIMEOUT}
+  MP3_URL_TTL: ${MP3_URL_TTL}
+  API_TOKEN: ${API_TOKEN}
+  JOB_RETENTION_DAYS: ${JOB_RETENTION_DAYS}
+  CLEANUP_INTERVAL: ${CLEANUP_INTERVAL}
+  RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN}
+  PARSER_API_URL: ${PARSER_API_URL}
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: v2m_api
+    restart: unless-stopped
+    environment:
+      <<: *app_env
+    depends_on:
+      - redis
+      - postgres
+      - minio
+    ports:
+      - "8080:8080"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: v2m_worker
+    restart: unless-stopped
+    environment:
+      <<: *app_env
+    depends_on:
+      - redis
+      - postgres
+      - minio
+      - video-parser
+    volumes:
+      - ./tmp:/tmp/video2mp3

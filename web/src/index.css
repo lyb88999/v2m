@@ -1,0 +1,88 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-sans: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+  --font-display: "Space Grotesk", "Trebuchet MS", sans-serif;
+
+  --radius: 0.9rem;
+  --background: hsl(28 100% 98%);
+  --foreground: hsl(20 20% 12%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(20 20% 12%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(20 20% 12%);
+  --primary: hsl(10 85% 55%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(190 40% 92%);
+  --secondary-foreground: hsl(200 30% 20%);
+  --muted: hsl(210 20% 94%);
+  --muted-foreground: hsl(210 10% 40%);
+  --accent: hsl(45 100% 85%);
+  --accent-foreground: hsl(25 35% 20%);
+  --destructive: hsl(0 70% 52%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(20 15% 86%);
+  --input: hsl(20 15% 86%);
+  --ring: hsl(10 85% 55%);
+  --chart-1: hsl(12 80% 55%);
+  --chart-2: hsl(190 55% 45%);
+  --chart-3: hsl(35 80% 52%);
+  --chart-4: hsl(200 45% 50%);
+  --chart-5: hsl(50 85% 55%);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+  }
+}
