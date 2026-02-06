@@ -81,6 +81,39 @@ jobs:
           tags: |
             ${{ env.IMAGE_PARSER }}:latest
 
+      - name: Prepare base images
+        run: |
+          docker pull redis:7-alpine
+          docker pull postgres:16-alpine
+          docker pull minio/minio:latest
+          docker pull minio/mc:latest
+          docker tag redis:7-alpine ${{ env.REGISTRY }}/lyb88999/v2m-redis:7-alpine
+          docker tag postgres:16-alpine ${{ env.REGISTRY }}/lyb88999/v2m-postgres:16-alpine
+          docker tag minio/minio:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio:latest
+          docker tag minio/mc:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio-mc:latest
+
+      - name: Package images for upload
+        run: |
+          mkdir -p /tmp/v2m_images
+          docker save \
+            ${{ env.IMAGE_API }}:latest \
+            ${{ env.IMAGE_WORKER }}:latest \
+            ${{ env.IMAGE_PARSER }}:latest \
+            ${{ env.REGISTRY }}/lyb88999/v2m-redis:7-alpine \
+            ${{ env.REGISTRY }}/lyb88999/v2m-postgres:16-alpine \
+            ${{ env.REGISTRY }}/lyb88999/v2m-minio:latest \
+            ${{ env.REGISTRY }}/lyb88999/v2m-minio-mc:latest \
+            | gzip -1 > /tmp/v2m_images/v2m-images.tar.gz
+
+      - name: Upload images
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "/tmp/v2m_images/v2m-images.tar.gz"
+          target: "/opt/v2m/images"
+
       - name: Upload compose files
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -96,12 +129,16 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          command_timeout: 60m
+          command_timeout: 90m
           script: |
             mkdir -p /opt/v2m
             cd /opt/v2m
             if [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
               docker login ghcr.io -u ${{ secrets.GHCR_USER }} -p ${{ secrets.GHCR_TOKEN }}
+            fi
+            if [ -f /opt/v2m/images/v2m-images.tar.gz ]; then
+              gunzip -c /opt/v2m/images/v2m-images.tar.gz | docker load
+              rm -f /opt/v2m/images/v2m-images.tar.gz
             fi
             if [ -f docker.env ]; then
               set -a
@@ -118,5 +155,4 @@ jobs:
             fi
             export DOCKER_CLIENT_TIMEOUT=300
             export COMPOSE_HTTP_TIMEOUT=300
-            $DC -f docker-compose.yml -f docker-compose.prod.yml pull api worker video-parser
             $DC -f docker-compose.yml -f docker-compose.prod.yml up -d
