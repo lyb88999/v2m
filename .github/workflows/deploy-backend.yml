@@ -16,6 +16,7 @@ jobs:
       IMAGE_API: ghcr.io/lyb88999/v2m-api
       IMAGE_WORKER: ghcr.io/lyb88999/v2m-worker
       IMAGE_PARSER: ghcr.io/lyb88999/v2m-parser
+      UPLOAD_BASE_IMAGES: ${{ vars.UPLOAD_BASE_IMAGES || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,28 +82,21 @@ jobs:
           tags: |
             ${{ env.IMAGE_PARSER }}:latest
 
-      - name: Prepare base images
-        run: |
-          docker pull redis:7-alpine
-          docker pull postgres:16-alpine
-          docker pull minio/minio:latest
-          docker pull minio/mc:latest
-          docker tag redis:7-alpine ${{ env.REGISTRY }}/lyb88999/v2m-redis:7-alpine
-          docker tag postgres:16-alpine ${{ env.REGISTRY }}/lyb88999/v2m-postgres:16-alpine
-          docker tag minio/minio:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio:latest
-          docker tag minio/mc:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio-mc:latest
-
       - name: Package images for upload
         run: |
-          docker save \
-            ${{ env.IMAGE_API }}:latest \
-            ${{ env.IMAGE_WORKER }}:latest \
-            ${{ env.IMAGE_PARSER }}:latest \
-            ${{ env.REGISTRY }}/lyb88999/v2m-redis:7-alpine \
-            ${{ env.REGISTRY }}/lyb88999/v2m-postgres:16-alpine \
-            ${{ env.REGISTRY }}/lyb88999/v2m-minio:latest \
-            ${{ env.REGISTRY }}/lyb88999/v2m-minio-mc:latest \
-            | gzip -1 > v2m-images.tar.gz
+          IMAGES="${{ env.IMAGE_API }}:latest ${{ env.IMAGE_WORKER }}:latest ${{ env.IMAGE_PARSER }}:latest"
+          if [ "${{ env.UPLOAD_BASE_IMAGES }}" = "true" ]; then
+            docker pull redis:7-alpine
+            docker pull postgres:16-alpine
+            docker pull minio/minio:latest
+            docker pull minio/mc:latest
+            docker tag redis:7-alpine ${{ env.REGISTRY }}/lyb88999/v2m-redis:7-alpine
+            docker tag postgres:16-alpine ${{ env.REGISTRY }}/lyb88999/v2m-postgres:16-alpine
+            docker tag minio/minio:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio:latest
+            docker tag minio/mc:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio-mc:latest
+            IMAGES="$IMAGES ${{ env.REGISTRY }}/lyb88999/v2m-redis:7-alpine ${{ env.REGISTRY }}/lyb88999/v2m-postgres:16-alpine ${{ env.REGISTRY }}/lyb88999/v2m-minio:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio-mc:latest"
+          fi
+          docker save $IMAGES | gzip -1 > v2m-images.tar.gz
 
       - name: Upload images
         uses: appleboy/scp-action@v0.1.7
@@ -146,12 +140,14 @@ jobs:
             fi
             if docker compose version >/dev/null 2>&1; then
               DC="docker compose"
+              PULL_ARGS="--pull never"
             elif docker-compose version >/dev/null 2>&1; then
               DC="docker-compose"
+              PULL_ARGS=""
             else
               echo "docker compose is not installed on the server"
               exit 1
             fi
             export DOCKER_CLIENT_TIMEOUT=300
             export COMPOSE_HTTP_TIMEOUT=300
-            $DC -f docker-compose.yml -f docker-compose.prod.yml up -d
+            $DC -f docker-compose.yml -f docker-compose.prod.yml up -d $PULL_ARGS
