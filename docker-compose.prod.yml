@@ -28,19 +28,19 @@ x-app-env: &app_env
 
 services:
   redis:
-    image: ghcr.io/lyb88999/v2m-redis:7-alpine
+    image: ${IMAGE_REGISTRY:-ghcr.io}/lyb88999/v2m-redis:7-alpine
 
   postgres:
-    image: ghcr.io/lyb88999/v2m-postgres:16-alpine
+    image: ${IMAGE_REGISTRY:-ghcr.io}/lyb88999/v2m-postgres:16-alpine
 
   minio:
-    image: ghcr.io/lyb88999/v2m-minio:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io}/lyb88999/v2m-minio:latest
 
   minio-init:
-    image: ghcr.io/lyb88999/v2m-minio-mc:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io}/lyb88999/v2m-minio-mc:latest
 
   api:
-    image: ghcr.io/lyb88999/v2m-api:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io}/lyb88999/v2m-api:latest
     container_name: v2m_api
     restart: unless-stopped
     environment:
@@ -53,7 +53,7 @@ services:
       - "8080:8080"
 
   worker:
-    image: ghcr.io/lyb88999/v2m-worker:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io}/lyb88999/v2m-worker:latest
     container_name: v2m_worker
     restart: unless-stopped
     environment:
@@ -67,7 +67,7 @@ services:
       - ./tmp:/tmp/video2mp3
 
   video-parser:
-    image: ghcr.io/lyb88999/v2m-parser:latest
+    image: ${IMAGE_REGISTRY:-ghcr.io}/lyb88999/v2m-parser:latest
     container_name: v2m_video_parser
     restart: unless-stopped
     environment:

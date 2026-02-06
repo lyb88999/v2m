@@ -189,3 +189,7 @@ GitHub repo secrets needed:
 
 For servers that cannot reach Docker Hub, the workflow also mirrors base images
 (redis/postgres/minio) into GHCR and the production compose uses those mirrors.
+
+If you want to use a GHCR mirror (e.g. `ghcr.nju.edu.cn`) for faster pulls,
+set `IMAGE_REGISTRY=ghcr.nju.edu.cn` in `/opt/v2m/docker.env` and also add a
+GitHub repository variable `IMAGE_REGISTRY` with the same value.

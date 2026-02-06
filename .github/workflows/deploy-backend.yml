@@ -16,6 +16,7 @@ jobs:
       IMAGE_API: ghcr.io/lyb88999/v2m-api
       IMAGE_WORKER: ghcr.io/lyb88999/v2m-worker
       IMAGE_PARSER: ghcr.io/lyb88999/v2m-parser
+      IMAGE_REGISTRY: ${{ vars.IMAGE_REGISTRY || 'ghcr.io' }}
       UPLOAD_BASE_IMAGES: ${{ vars.UPLOAD_BASE_IMAGES || 'false' }}
     steps:
       - name: Checkout
@@ -85,6 +86,12 @@ jobs:
       - name: Package images for upload
         run: |
           IMAGES="${{ env.IMAGE_API }}:latest ${{ env.IMAGE_WORKER }}:latest ${{ env.IMAGE_PARSER }}:latest"
+          if [ "${{ env.IMAGE_REGISTRY }}" != "${{ env.REGISTRY }}" ]; then
+            docker tag ${{ env.IMAGE_API }}:latest ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-api:latest
+            docker tag ${{ env.IMAGE_WORKER }}:latest ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-worker:latest
+            docker tag ${{ env.IMAGE_PARSER }}:latest ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-parser:latest
+            IMAGES="$IMAGES ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-api:latest ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-worker:latest ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-parser:latest"
+          fi
           if [ "${{ env.UPLOAD_BASE_IMAGES }}" = "true" ]; then
             docker pull redis:7-alpine
             docker pull postgres:16-alpine
@@ -95,6 +102,13 @@ jobs:
             docker tag minio/minio:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio:latest
             docker tag minio/mc:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio-mc:latest
             IMAGES="$IMAGES ${{ env.REGISTRY }}/lyb88999/v2m-redis:7-alpine ${{ env.REGISTRY }}/lyb88999/v2m-postgres:16-alpine ${{ env.REGISTRY }}/lyb88999/v2m-minio:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio-mc:latest"
+            if [ "${{ env.IMAGE_REGISTRY }}" != "${{ env.REGISTRY }}" ]; then
+              docker tag redis:7-alpine ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-redis:7-alpine
+              docker tag postgres:16-alpine ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-postgres:16-alpine
+              docker tag minio/minio:latest ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-minio:latest
+              docker tag minio/mc:latest ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-minio-mc:latest
+              IMAGES="$IMAGES ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-redis:7-alpine ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-postgres:16-alpine ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-minio:latest ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-minio-mc:latest"
+            fi
           fi
           docker save $IMAGES | gzip -1 > v2m-images.tar.gz
 
