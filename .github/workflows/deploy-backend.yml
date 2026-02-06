@@ -81,19 +81,25 @@ jobs:
           tags: |
             ${{ env.IMAGE_PARSER }}:latest
 
+      - name: Upload compose files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "docker-compose.yml,docker-compose.prod.yml"
+          target: "/opt/v2m"
+
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          command_timeout: 60m
           script: |
-            if [ ! -d /opt/v2m/.git ]; then
-              git clone https://github.com/lyb88999/v2m.git /opt/v2m
-            fi
+            mkdir -p /opt/v2m
             cd /opt/v2m
-            git fetch --all
-            git reset --hard origin/main
             if [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
               docker login ghcr.io -u ${{ secrets.GHCR_USER }} -p ${{ secrets.GHCR_TOKEN }}
             fi
