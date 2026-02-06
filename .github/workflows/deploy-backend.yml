@@ -40,6 +40,20 @@ jobs:
             git clone --depth=1 "$PARSER_REPO" video-parser
           fi
 
+      - name: Mirror base images to GHCR
+        run: |
+          mirror() {
+            src="$1"
+            dst="$2"
+            docker pull "$src"
+            docker tag "$src" "$dst"
+            docker push "$dst"
+          }
+          mirror redis:7-alpine ${{ env.REGISTRY }}/lyb88999/v2m-redis:7-alpine
+          mirror postgres:16-alpine ${{ env.REGISTRY }}/lyb88999/v2m-postgres:16-alpine
+          mirror minio/minio:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio:latest
+          mirror minio/mc:latest ${{ env.REGISTRY }}/lyb88999/v2m-minio-mc:latest
+
       - name: Build and push api
         uses: docker/build-push-action@v5
         with:

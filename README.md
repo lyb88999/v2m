@@ -186,3 +186,6 @@ GitHub repo secrets needed:
 - `SERVER_HOST` / `SERVER_USER` / `SERVER_SSH_KEY`
 - `GHCR_USER` / `GHCR_TOKEN` (with read:packages for pulling on server)
 - Optional: `PARSER_REPO` to point to your own video-parser fork
+
+For servers that cannot reach Docker Hub, the workflow also mirrors base images
+(redis/postgres/minio) into GHCR and the production compose uses those mirrors.

@@ -27,6 +27,18 @@ x-app-env: &app_env
   PARSER_API_URL: ${PARSER_API_URL}
 
 services:
+  redis:
+    image: ghcr.io/lyb88999/v2m-redis:7-alpine
+
+  postgres:
+    image: ghcr.io/lyb88999/v2m-postgres:16-alpine
+
+  minio:
+    image: ghcr.io/lyb88999/v2m-minio:latest
+
+  minio-init:
+    image: ghcr.io/lyb88999/v2m-minio-mc:latest
+
   api:
     image: ghcr.io/lyb88999/v2m-api:latest
     container_name: v2m_api
