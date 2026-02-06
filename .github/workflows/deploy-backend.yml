@@ -86,6 +86,9 @@ jobs:
 
       - name: Package images for upload
         run: |
+          docker pull ${{ env.IMAGE_API }}:latest
+          docker pull ${{ env.IMAGE_WORKER }}:latest
+          docker pull ${{ env.IMAGE_PARSER }}:latest
           IMAGES="${{ env.IMAGE_API }}:latest ${{ env.IMAGE_WORKER }}:latest ${{ env.IMAGE_PARSER }}:latest"
           if [ "${{ env.IMAGE_REGISTRY }}" != "${{ env.REGISTRY }}" ]; then
             docker tag ${{ env.IMAGE_API }}:latest ${{ env.IMAGE_REGISTRY }}/lyb88999/v2m-api:latest
