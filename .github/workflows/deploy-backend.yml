@@ -83,5 +83,18 @@ jobs:
             if [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
               docker login ghcr.io -u ${{ secrets.GHCR_USER }} -p ${{ secrets.GHCR_TOKEN }}
             fi
-            docker compose --env-file docker.env -f docker-compose.yml -f docker-compose.prod.yml pull
-            docker compose --env-file docker.env -f docker-compose.yml -f docker-compose.prod.yml up -d
+            if [ -f docker.env ]; then
+              set -a
+              . ./docker.env
+              set +a
+            fi
+            if docker compose version >/dev/null 2>&1; then
+              DC="docker compose"
+            elif docker-compose version >/dev/null 2>&1; then
+              DC="docker-compose"
+            else
+              echo "docker compose is not installed on the server"
+              exit 1
+            fi
+            $DC -f docker-compose.yml -f docker-compose.prod.yml pull
+            $DC -f docker-compose.yml -f docker-compose.prod.yml up -d
