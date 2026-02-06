@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -239,16 +240,43 @@ func main() {
 				writeJSON(w, http.StatusConflict, errorResponse{Error: "job not ready"})
 				return
 			}
-			mp3URL, err := mp3DownloadURLForJob(r.Context(), cfg, s3, j)
+			key := objectKeyFromJob(cfg, j)
+			if key == "" {
+				mp3URL, err := mp3DownloadURLForJob(r.Context(), cfg, s3, j)
+				if err != nil {
+					writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "failed to sign mp3 url"})
+					return
+				}
+				if mp3URL == nil {
+					writeJSON(w, http.StatusNotFound, errorResponse{Error: "mp3 not found"})
+					return
+				}
+				http.Redirect(w, r, *mp3URL, http.StatusFound)
+				return
+			}
+			obj, info, err := s3.OpenObject(r.Context(), key)
 			if err != nil {
-				writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "failed to sign mp3 url"})
+				if errors.Is(err, storage.ErrObjectNotFound) {
+					writeJSON(w, http.StatusNotFound, errorResponse{Error: "mp3 not found"})
+					return
+				}
+				writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "failed to load mp3"})
 				return
 			}
-			if mp3URL == nil {
-				writeJSON(w, http.StatusNotFound, errorResponse{Error: "mp3 not found"})
-				return
+			defer obj.Close()
+			filename := fmt.Sprintf("video2mp3-%s.mp3", j.ID)
+			contentType := "audio/mpeg"
+			if info != nil && info.ContentType != "" {
+				contentType = info.ContentType
 			}
-			http.Redirect(w, r, *mp3URL, http.StatusFound)
+			w.Header().Set("Content-Type", contentType)
+			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+			if info != nil && info.Size > 0 {
+				w.Header().Set("Content-Length", strconv.FormatInt(info.Size, 10))
+			}
+			if _, err := io.Copy(w, obj); err != nil {
+				log.Printf("download stream error job=%s: %v", j.ID, err)
+			}
 			return
 		}
 		if strings.HasSuffix(path, "/events") {

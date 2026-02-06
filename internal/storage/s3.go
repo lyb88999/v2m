@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"strings"
 	"time"
@@ -11,6 +12,14 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
+
+var ErrObjectNotFound = errors.New("object not found")
+
+type ObjectInfo struct {
+	Size         int64
+	ContentType  string
+	LastModified time.Time
+}
 
 type S3Client struct {
 	client         *minio.Client
@@ -147,6 +156,30 @@ func (s *S3Client) PresignMP3Download(ctx context.Context, objectKey string, exp
 		return "", err
 	}
 	return u.String(), nil
+}
+
+func (s *S3Client) OpenObject(ctx context.Context, objectKey string) (io.ReadCloser, *ObjectInfo, error) {
+	if strings.TrimSpace(objectKey) == "" {
+		return nil, nil, errors.New("object key is empty")
+	}
+	obj, err := s.client.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+	stat, err := obj.Stat()
+	if err != nil {
+		_ = obj.Close()
+		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
+			return nil, nil, ErrObjectNotFound
+		}
+		return nil, nil, err
+	}
+	info := &ObjectInfo{
+		Size:         stat.Size,
+		ContentType:  stat.ContentType,
+		LastModified: stat.LastModified,
+	}
+	return obj, info, nil
 }
 
 func (s *S3Client) DeleteObject(ctx context.Context, objectKey string) error {
