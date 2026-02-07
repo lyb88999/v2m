@@ -32,11 +32,19 @@ jobs:
       - name: Install deps
         working-directory: web
         run: npm ci
+      - name: Check GitHub Pages API base
+        env:
+          GHPAGES_API_BASE: ${{ vars.GHPAGES_API_BASE }}
+        run: |
+          if [ -z "$GHPAGES_API_BASE" ]; then
+            echo "GHPAGES_API_BASE is not set. Add it in Settings → Secrets and variables → Actions → Variables."
+            exit 1
+          fi
       - name: Build
         working-directory: web
         env:
           VITE_BASE: "/v2m/"
-          VITE_API_BASE: "https://v2m-inky.vercel.app/api"
+          VITE_API_BASE: ${{ vars.GHPAGES_API_BASE }}
         run: npm run build
       - name: Disable Jekyll
         run: touch web/dist/.nojekyll
