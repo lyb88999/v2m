@@ -1,5 +1,6 @@
 services:
   web:
+    image: ${IMAGE_REGISTRY:-ghcr.io}/lyb88999/v2m-web:latest
     build:
       context: ./web
       dockerfile: Dockerfile

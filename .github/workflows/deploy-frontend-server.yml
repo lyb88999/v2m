@@ -1,0 +1,83 @@
+name: Deploy Frontend (Server)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "docker-compose.web.yml"
+      - ".github/workflows/deploy-frontend-server.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-deploy:
+    if: vars.DEPLOY_WEB_SERVER == 'true'
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_WEB: ghcr.io/lyb88999/v2m-web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push web
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web
+          file: ./web/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_BASE=
+            VITE_API_TOKEN=
+          tags: |
+            ${{ env.IMAGE_WEB }}:latest
+
+      - name: Upload web compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "docker-compose.web.yml"
+          target: "/opt/v2m"
+
+      - name: Deploy web to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          command_timeout: 30m
+          script: |
+            cd /opt/v2m
+            if [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
+              docker login ghcr.io -u ${{ secrets.GHCR_USER }} -p ${{ secrets.GHCR_TOKEN }}
+            fi
+            if [ -f docker.env ]; then
+              set -a
+              . ./docker.env
+              set +a
+            fi
+            if docker compose version >/dev/null 2>&1; then
+              DC="docker compose"
+            elif docker-compose version >/dev/null 2>&1; then
+              DC="docker-compose"
+            else
+              echo "docker compose is not installed on the server"
+              exit 1
+            fi
+            $DC -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.web.yml pull web
+            $DC -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.web.yml up -d web
