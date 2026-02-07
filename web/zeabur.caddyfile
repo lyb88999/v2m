@@ -1,0 +1,4 @@
+# Zeabur Caddyfile snippet.
+# Paste into Zeabur's /etc/caddy/Caddyfile via the Config Editor.
+@api path /api/*
+reverse_proxy @api http://115.190.197.139:8080
